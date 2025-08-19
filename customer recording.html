@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Loyalty Points App</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background-color: #f0f2f5;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .header {
+            background: #007bff;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        input:invalid {
+            border-color: #dc3545;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            touch-action: manipulation;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #218838;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            color: #333;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 500px;
+            background: #fff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            color: #666;
+            font-size: 12px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .tab.active {
+            color: #007bff;
+            font-weight: bold;
+        }
+        .tab i {
+            display: block;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        @media (min-width: 600px) {
+            .app-container {
+                border-radius: 10px;
+                margin: 20px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">Loyalty Points App</div>
+        <div class="content">
+            <!-- Add Customer Tab -->
+            <div id="add-customer" class="tab-content active">
+                <div class="form-group">
+                    <label for="customerId">Customer ID (e.g., email)</label>
+                    <input type="text" id="customerId" placeholder="Enter customer ID" required>
+                </div>
+                <div class="form-group">
+                    <label for="customerName">Customer Name</label>
+                    <input type="text" id="customerName" placeholder="Enter customer name" required>
+                </div>
+                <button onclick="addCustomer()">Add Customer</button>
+            </div>
+
+            <!-- Earn Points Tab -->
+            <div id="earn-points" class="tab-content">
+                <div class="form-group">
+                    <label for="earnId">Customer ID</label>
+                    <input type="text" id="earnId" placeholder="Enter customer ID" required>
+                </div>
+                <div class="form-group">
+                    <label for="amountSpent">Amount Spent (Pesos)</label>
+                    <input type="number" id="amountSpent" placeholder="Enter amount in pesos" min="0" step="0.01" required>
+                </div>
+                <button onclick="earnPoints()">Record Spending</button>
+            </div>
+
+            <!-- Redeem Points Tab -->
+            <div id="redeem-points" class="tab-content">
+                <div class="form-group">
+                    <label for="redeemId">Customer ID</label>
+                    <input type="text" id="redeemId" placeholder="Enter customer ID" required>
+                </div>
+                <div class="form-group">
+                    <label for="pointsToRedeem">Points to Redeem</label>
+                    <input type="number" id="pointsToRedeem" placeholder="Enter points" min="1" step="1" required>
+                </div>
+                <button onclick="redeemPoints()">Redeem Points</button>
+            </div>
+
+            <!-- View Customer Tab -->
+            <div id="view-customer" class="tab-content">
+                <div class="form-group">
+                    <label for="viewId">Customer ID</label>
+                    <input type="text" id="viewId" placeholder="Enter customer ID" required>
+                </div>
+                <button onclick="viewCustomer()">View Record</button>
+                <button onclick="backupData()">Backup Data</button>
+                <button onclick="restoreData()">Restore Data</button>
+                <button onclick="exportReport()">Export Report (CSV)</button>
+            </div>
+
+            <!-- Customer Portal Tab -->
+            <div id="customer-portal" class="tab-content">
+                <div class="form-group">
+                    <label for="portalId">Your Customer ID</label>
+                    <input type="text" id="portalId" placeholder="Enter your customer ID" required>
+                </div>
+                <button onclick="viewPortalRecord()">View My Points</button>
+            </div>
+
+            <!-- Output Area -->
+            <div id="output">Messages will appear here.</div>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <div class="tab active" onclick="switchTab('add-customer')"><i>👤</i>Add</div>
+            <div class="tab" onclick="switchTab('earn-points')"><i>💰</i>Earn</div>
+            <div class="tab" onclick="switchTab('redeem-points')"><i>🎁</i>Redeem</div>
+            <div class="tab" onclick="switchTab('view-customer')"><i>📋</i>View</div>
+            <div class="tab" onclick="switchTab('customer-portal')"><i>🔑</i>Portal</div>
+        </div>
+    </div>
+
+    <script>
+        // Loyalty System Logic
+        class LoyaltySystem {
+            constructor() {
+                this.customers = {}; // Store customer records in memory
+                this.loadFromLocalStorage(); // Load data on init
+            }
+
+            addCustomer(customerId, name) {
+                if (!customerId || !name) return "Please enter both customer ID and name.";
+                if (this.customers[customerId]) {
+                    return `Customer ${customerId} already exists.`;
+                }
+                this.customers[customerId] = {
+                    name: name,
+                    points: 0,
+                    totalSpent: 0
+                };
+                this.saveToLocalStorage();
+                return `Added customer ${name} (ID: ${customerId}) with 0 points.`;
+            }
+
+            earnPoints(customerId, amountSpent) {
+                if (!customerId || isNaN(amountSpent) || amountSpent < 0) {
+                    return "Please enter a valid customer ID and amount.";
+                }
+                if (!this.customers[customerId]) {
+                    return "Customer not found.";
+                }
+                const customer = this.customers[customerId];
+                const pointsEarned = Math.floor(amountSpent / 150); // 1 point per 150 pesos
+                customer.points += pointsEarned;
+                customer.totalSpent += parseFloat(amountSpent.toFixed(2));
+                this.saveToLocalStorage();
+                return `${customer.name} earned ${pointsEarned} points for spending ${amountSpent} pesos.\nTotal points: ${customer.points}\nTotal spent: ${customer.totalSpent} pesos`;
+            }
+
+            redeemPoints(customerId, pointsToRedeem) {
+                if (!customerId || isNaN(pointsToRedeem) || pointsToRedeem <= 0) {
+                    return "Please enter a valid customer ID and points to redeem.";
+                }
+                if (!this.customers[customerId]) {
+                    return "Customer not found.";
+                }
+                const customer = this.customers[customerId];
+                if (customer.points < pointsToRedeem) {
+                    return `Insufficient points. Available: ${customer.points}`;
+                }
+                customer.points -= pointsToRedeem;
+                const rewardValue = pointsToRedeem * 10; // 1 point = 10 pesos discount
+                this.saveToLocalStorage();
+                return `${customer.name} redeemed ${pointsToRedeem} points for ${rewardValue} pesos discount.\nRemaining points: ${customer.points}`;
+            }
+
+            viewCustomer(customerId) {
+                if (!customerId) return "Please enter a customer ID.";
+                if (!this.customers[customerId]) {
+                    return "Customer not found.";
+                }
+                const customer = this.customers[customerId];
+                return `Customer: ${customer.name} (ID: ${customerId})\nPoints: ${customer.points}\nTotal Spent: ${customer.totalSpent} pesos`;
+            }
+
+            viewPortalRecord(customerId) {
+                if (!customerId) return "Please enter your customer ID.";
+                if (!this.customers[customerId]) {
+                    return "Customer not found.";
+                }
+                const customer = this.customers[customerId];
+                return `Your Points: ${customer.points}\nTotal Spent: ${customer.totalSpent} pesos`;
+            }
+
+            saveToLocalStorage() {
+                localStorage.setItem('loyaltyCustomers', JSON.stringify(this.customers));
+            }
+
+            loadFromLocalStorage() {
+                const storedData = localStorage.getItem('loyaltyCustomers');
+                if (storedData) {
+                    this.customers = JSON.parse(storedData);
+                }
+            }
+
+            exportToCSV() {
+                let csvContent = "Customer ID,Name,Points,Total Spent\n";
+                for (const [id, customer] of Object.entries(this.customers)) {
+                    csvContent += `${id},${customer.name},${customer.points},${customer.totalSpent}\n`;
+                }
+                return csvContent;
+            }
+        }
+
+        // Initialize the system
+        const system = new LoyaltySystem();
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            displayMessage('Messages will appear here.');
+        }
+
+        // DOM Interaction Functions
+        function addCustomer() {
+            const customerId = document.getElementById('customerId').value.trim();
+            const customerName = document.getElementById('customerName').value.trim();
+            const message = system.addCustomer(customerId, customerName);
+            displayMessage(message);
+            if (!message.includes("already exists") && !message.includes("Please enter")) {
+                document.getElementById('customerId').value = '';
+                document.getElementById('customerName').value = '';
+            }
+        }
+
+        function earnPoints() {
+            const customerId = document.getElementById('earnId').value.trim();
+            const amountSpent = parseFloat(document.getElementById('amountSpent').value);
+            const message = system.earnPoints(customerId, amountSpent);
+            displayMessage(message);
+            if (!message.includes("not found") && !message.includes("valid")) {
+                document.getElementById('earnId').value = '';
+                document.getElementById('amountSpent').value = '';
+            }
+        }
+
+        function redeemPoints() {
+            const customerId = document.getElementById('redeemId').value.trim();
+            const pointsToRedeem = parseInt(document.getElementById('pointsToRedeem').value);
+            const message = system.redeemPoints(customerId, pointsToRedeem);
+            displayMessage(message);
+            if (!message.includes("not found") && !message.includes("valid") && !message.includes("Insufficient")) {
+                document.getElementById('redeemId').value = '';
+                document.getElementById('pointsToRedeem').value = '';
+            }
+        }
+
+        function viewCustomer() {
+            const customerId = document.getElementById('viewId').value.trim();
+            const message = system.viewCustomer(customerId);
+            displayMessage(message);
+            if (!message.includes("not found") && !message.includes("valid")) {
+                document.getElementById('viewId').value = '';
+            }
+        }
+
+        function viewPortalRecord() {
+            const customerId = document.getElementById('portalId').value.trim();
+            const message = system.viewPortalRecord(customerId);
+            displayMessage(message);
+            if (!message.includes("not found") && !message.includes("valid")) {
+                document.getElementById('portalId').value = '';
+            }
+        }
+
+        function backupData() {
+            system.saveToLocalStorage();
+            displayMessage('Data backed up to local storage.');
+        }
+
+        function restoreData() {
+            system.loadFromLocalStorage();
+            displayMessage('Data restored from local storage.');
+        }
+
+        function exportReport() {
+            const csvContent = system.exportToCSV();
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'loyalty_report.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            displayMessage('Report exported as CSV.');
+        }
+
+        function displayMessage(message) {
+            const output = document.getElementById('output');
+            output.textContent = message;
+            output.classList.toggle('error', message.includes("not found") || message.includes("valid") || message.includes("Insufficient") || message.includes("exists"));
+        }
+
+        // Service Worker Registration for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
